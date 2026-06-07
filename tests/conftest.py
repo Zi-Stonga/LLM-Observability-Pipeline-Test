@@ -8,6 +8,9 @@ import pytest
 @pytest.fixture(autouse=True)
 def set_lambda_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Inject required Lambda environment variables for all tests."""
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "testing")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "testing")
     monkeypatch.setenv("TRACE_TABLE", "ai-obs-traces")
     monkeypatch.setenv("SCORES_TABLE", "ai-obs-scores")
     monkeypatch.setenv("FLAGS_TABLE", "ai-obs-flags")
