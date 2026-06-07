@@ -1,0 +1,17 @@
+*.pyc
+__pycache__/
+.venv/
+.env
+*.egg-info/
+dist/
+build/
+cdk.out/
+.cdk.staging/
+node_modules/
+.DS_Store
+*.swp
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+synth_output.txt
