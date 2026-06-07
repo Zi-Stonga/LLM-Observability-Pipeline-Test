@@ -214,7 +214,7 @@ class AiObservabilityStack(Stack):
             time_to_live_attribute="ttl",
             encryption=enc,
             encryption_key=key,
-            point_in_time_recovery=True,
+            point_in_time_recovery_specification=dynamodb.CfnTable.PointInTimeRecoverySpecificationProperty(point_in_time_recovery_enabled=True),
             removal_policy=RemovalPolicy.DESTROY,
         )
         trace.add_global_secondary_index(
@@ -232,7 +232,7 @@ class AiObservabilityStack(Stack):
             stream=dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
             encryption=enc,
             encryption_key=key,
-            point_in_time_recovery=True,
+            point_in_time_recovery_specification=dynamodb.CfnTable.PointInTimeRecoverySpecificationProperty(point_in_time_recovery_enabled=True),
             removal_policy=RemovalPolicy.DESTROY,
         )
 
@@ -576,7 +576,6 @@ class AiObservabilityStack(Stack):
                 scores_table,
                 starting_position=lambda_.StartingPosition.LATEST,
                 batch_size=10,
-                bisect_batch_on_function_error=True,
                 retry_attempts=3,
             )
         )
