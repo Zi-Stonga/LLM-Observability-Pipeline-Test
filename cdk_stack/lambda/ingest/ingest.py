@@ -35,9 +35,7 @@ SPAN_STREAM: str = os.environ["SPAN_STREAM"]
 _SAFE_ID_RE: re.Pattern[str] = re.compile(r"^[a-zA-Z0-9_\-]{1,128}$")
 _SAFE_MODEL_RE: re.Pattern[str] = re.compile(r"^[a-zA-Z0-9_\-\.]{1,64}$")
 _SAFE_VER_RE: re.Pattern[str] = re.compile(r"^[a-zA-Z0-9_\-\.]{1,32}$")
-_VALID_ENVIRONMENTS: frozenset[str] = frozenset(
-    {"production", "staging", "development", "test"}
-)
+_VALID_ENVIRONMENTS: frozenset[str] = frozenset({"production", "staging", "development", "test"})
 _TEMP_MIN: float = 0.0
 _TEMP_MAX: float = 2.0
 
@@ -56,9 +54,7 @@ def _validate_identifier(value: str, field: str) -> str:
         ValueError: If value fails the safe identifier pattern.
     """
     if not isinstance(value, str) or not _SAFE_ID_RE.match(value):
-        raise ValueError(
-            f"{field} must be 1-128 characters: letters, digits, hyphens, underscores"
-        )
+        raise ValueError(f"{field} must be 1-128 characters: letters, digits, hyphens, underscores")
     return value
 
 
@@ -96,9 +92,7 @@ def _parse_request(body: dict[str, Any]) -> dict[str, Any]:
         ValueError: If any field fails validation.
     """
     raw_tid = body.get("trace_id")
-    trace_id = (
-        _validate_identifier(raw_tid, "trace_id") if raw_tid else str(uuid.uuid4())
-    )
+    trace_id = _validate_identifier(raw_tid, "trace_id") if raw_tid else str(uuid.uuid4())
 
     session_id = "unknown"
     if body.get("session_id"):

@@ -36,9 +36,7 @@ def _scan_recent_llm_spans(cutoff: str) -> list[dict[str, Any]]:
     """
     items: list[dict[str, Any]] = []
     kwargs: dict[str, Any] = {
-        "FilterExpression": (
-            Attr("span_type").eq("llm_call") & Attr("timestamp").gte(cutoff)
-        ),
+        "FilterExpression": (Attr("span_type").eq("llm_call") & Attr("timestamp").gte(cutoff)),
         "ProjectionExpression": "trace_id,latency_ms,#e,retries,total_tokens,cost_usd",
         "ExpressionAttributeNames": {"#e": "error"},
     }
@@ -75,18 +73,24 @@ def handler(event: dict[str, Any], context: Any) -> None:
         token_total = sum(int(item.get("total_tokens") or 0) for item in items)
         cost_total = sum(float(item.get("cost_usd") or 0) for item in items)
 
-        cw.put_metric_data(Namespace=NS, MetricData=[
-            {"MetricName": "RequestCount",      "Value": count,              "Unit": "Count"},
-            {"MetricName": "PipelineLatencyMs", "Value": avg_latency,        "Unit": "Milliseconds"},
-            {"MetricName": "ErrorRate",         "Value": error_count / count, "Unit": "None"},
-            {"MetricName": "RetryCount",        "Value": retry_total,        "Unit": "Count"},
-            {"MetricName": "TotalTokens",       "Value": token_total,        "Unit": "Count"},
-            {"MetricName": "ModelCostUSD",      "Value": cost_total,         "Unit": "None"},
-        ])
+        cw.put_metric_data(
+            Namespace=NS,
+            MetricData=[
+                {"MetricName": "RequestCount", "Value": count, "Unit": "Count"},
+                {"MetricName": "PipelineLatencyMs", "Value": avg_latency, "Unit": "Milliseconds"},
+                {"MetricName": "ErrorRate", "Value": error_count / count, "Unit": "None"},
+                {"MetricName": "RetryCount", "Value": retry_total, "Unit": "Count"},
+                {"MetricName": "TotalTokens", "Value": token_total, "Unit": "Count"},
+                {"MetricName": "ModelCostUSD", "Value": cost_total, "Unit": "None"},
+            ],
+        )
 
         logger.info(
             "Metrics emitted: count=%d avg_latency=%.1fms error_rate=%.3f cost=$%.4f",
-            count, avg_latency, error_count / count, cost_total,
+            count,
+            avg_latency,
+            error_count / count,
+            cost_total,
         )
 
     except Exception as exc:

@@ -8,7 +8,10 @@ import sys
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cdk_stack", "lambda", "scorer"))
+sys.path.insert(
+    0,
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cdk_stack", "lambda", "scorer"),
+)
 
 import pytest
 
@@ -38,6 +41,7 @@ class TestScorerHandler:
     ) -> None:
         # Arrange
         from scorer import handler
+
         mock_trace.query.return_value = {
             "Items": [
                 {
@@ -78,6 +82,7 @@ class TestScorerHandler:
     ) -> None:
         # Arrange
         from scorer import handler
+
         event = {"Records": [{"messageId": "x", "body": json.dumps({})}]}
         # Act
         handler(event, None)
@@ -96,6 +101,7 @@ class TestScorerHandler:
     ) -> None:
         # Arrange: raising simulates a DynamoDB failure; SQS should retry
         from scorer import handler
+
         mock_trace.query.side_effect = Exception("DynamoDB unavailable")
         # Act / Assert
         with pytest.raises(Exception, match="DynamoDB unavailable"):

@@ -34,10 +34,20 @@ trace_tbl = dynamodb.Table(os.environ["TRACE_TABLE"])
 scores_tbl = dynamodb.Table(os.environ["SCORES_TABLE"])
 NS = "AIObservability"
 
-_HEDGE_WORDS: frozenset[str] = frozenset({
-    "i think", "i believe", "i'm not sure", "probably", "possibly",
-    "might be", "could be", "it seems", "it appears", "generally",
-})
+_HEDGE_WORDS: frozenset[str] = frozenset(
+    {
+        "i think",
+        "i believe",
+        "i'm not sure",
+        "probably",
+        "possibly",
+        "might be",
+        "could be",
+        "it seems",
+        "it appears",
+        "generally",
+    }
+)
 _TOKEN_RE: re.Pattern[str] = re.compile(r"\b[a-z]{3,}\b")
 
 
@@ -133,49 +143,55 @@ def handler(event: dict[str, Any], context: Any) -> None:
             by_type: dict[str, dict[str, Any]] = {s.get("span_type", ""): s for s in spans}
 
             answer: str = by_type.get("final_response", {}).get("payload", "") or ""
-            ret_span = (
-                by_type.get("retrieved_chunks") or by_type.get("retriever") or {}
-            )
+            ret_span = by_type.get("retrieved_chunks") or by_type.get("retriever") or {}
             chunks: list[dict[str, Any]] = ret_span.get("enriched_chunks", [])
 
             groundedness = compute_groundedness(answer, chunks)
             hallucination = compute_hallucination(answer, chunks)
 
             total_cost = sum(
-                float(s.get("cost_usd") or 0)
-                for s in spans
-                if s.get("span_type") == "llm_call"
+                float(s.get("cost_usd") or 0) for s in spans if s.get("span_type") == "llm_call"
             )
             llm_span = by_type.get("llm_call", {})
             total_tokens = int(llm_span.get("total_tokens") or 0)
             model = llm_span.get("model", "unknown")
 
-            scores_tbl.put_item(Item={
-                "trace_id": trace_id,
-                "scored_at": datetime.now(UTC).isoformat(),
-                "groundedness": str(groundedness),
-                "hallucination": str(hallucination),
-                "cost_usd": str(round(total_cost, 6)),
-                "total_tokens": total_tokens,
-                "model": model,
-                "chunk_count": len(chunks),
-                "answer_len": len(answer),
-            })
+            scores_tbl.put_item(
+                Item={
+                    "trace_id": trace_id,
+                    "scored_at": datetime.now(UTC).isoformat(),
+                    "groundedness": str(groundedness),
+                    "hallucination": str(hallucination),
+                    "cost_usd": str(round(total_cost, 6)),
+                    "total_tokens": total_tokens,
+                    "model": model,
+                    "chunk_count": len(chunks),
+                    "answer_len": len(answer),
+                }
+            )
 
-            cw.put_metric_data(Namespace=NS, MetricData=[
-                {"MetricName": "GroundednessScore",  "Value": groundedness,  "Unit": "None"},
-                {"MetricName": "HallucinationScore", "Value": hallucination, "Unit": "None"},
-                {"MetricName": "ModelCostUSD",       "Value": total_cost,    "Unit": "None"},
-            ])
+            cw.put_metric_data(
+                Namespace=NS,
+                MetricData=[
+                    {"MetricName": "GroundednessScore", "Value": groundedness, "Unit": "None"},
+                    {"MetricName": "HallucinationScore", "Value": hallucination, "Unit": "None"},
+                    {"MetricName": "ModelCostUSD", "Value": total_cost, "Unit": "None"},
+                ],
+            )
 
             logger.info(
                 "Scored trace %s: groundedness=%.3f hallucination=%.3f cost=$%.4f",
-                trace_id, groundedness, hallucination, total_cost,
+                trace_id,
+                groundedness,
+                hallucination,
+                total_cost,
             )
 
         except Exception as exc:
             logger.error(
-                "ERROR scoring record %s: %s", record.get("messageId", "?"), exc,
+                "ERROR scoring record %s: %s",
+                record.get("messageId", "?"),
+                exc,
                 exc_info=True,
             )
             raise

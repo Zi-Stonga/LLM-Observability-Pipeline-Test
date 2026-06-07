@@ -13,9 +13,11 @@ class TestLambdaConfig:
         import importlib
 
         import src.config as config_module
+
         importlib.reload(config_module)
         # Act
         from src.config import config
+
         # Assert
         assert config.trace_table == "ai-obs-traces"
         assert config.scores_table == "ai-obs-scores"
@@ -28,8 +30,10 @@ class TestLambdaConfig:
         import importlib
 
         import src.config as config_module
+
         importlib.reload(config_module)
         from src.config import config
+
         # Assert
         assert config.span_stream == ""
         assert config.scoring_queue_url == ""

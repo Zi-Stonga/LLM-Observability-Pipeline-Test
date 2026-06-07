@@ -31,9 +31,14 @@ class TestQualityScore:
 
     def test_fields_are_stored(self) -> None:
         score = QualityScore(
-            trace_id="t1", groundedness=0.9, hallucination=0.1,
-            cost_usd=Decimal("0.001"), total_tokens=100,
-            model="claude-sonnet", chunk_count=3, answer_len=200,
+            trace_id="t1",
+            groundedness=0.9,
+            hallucination=0.1,
+            cost_usd=Decimal("0.001"),
+            total_tokens=100,
+            model="claude-sonnet",
+            chunk_count=3,
+            answer_len=200,
         )
         assert score.groundedness == 0.9
         assert score.hallucination == 0.1
@@ -41,9 +46,14 @@ class TestQualityScore:
 
     def test_repr_contains_scores(self) -> None:
         score = QualityScore(
-            trace_id="t1", groundedness=0.9, hallucination=0.1,
-            cost_usd=Decimal("0.001"), total_tokens=100,
-            model="claude-sonnet", chunk_count=3, answer_len=200,
+            trace_id="t1",
+            groundedness=0.9,
+            hallucination=0.1,
+            cost_usd=Decimal("0.001"),
+            total_tokens=100,
+            model="claude-sonnet",
+            chunk_count=3,
+            answer_len=200,
         )
         assert "0.900" in repr(score)
         assert "t1" in repr(score)
@@ -54,15 +64,21 @@ class TestFlag:
 
     def test_defaults_are_set(self) -> None:
         flag = Flag(
-            flag_id="f1", trace_id="t1", rule="HIGH_HALLUCINATION",
-            detail="test detail", severity="CRITICAL",
+            flag_id="f1",
+            trace_id="t1",
+            rule="HIGH_HALLUCINATION",
+            detail="test detail",
+            severity="CRITICAL",
         )
         assert flag.status == "open"
 
     def test_repr_contains_rule(self) -> None:
         flag = Flag(
-            flag_id="f1", trace_id="t1", rule="COST_SPIKE",
-            detail="detail", severity="MEDIUM",
+            flag_id="f1",
+            trace_id="t1",
+            rule="COST_SPIKE",
+            detail="detail",
+            severity="MEDIUM",
         )
         assert "COST_SPIKE" in repr(flag)
 

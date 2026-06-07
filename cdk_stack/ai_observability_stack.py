@@ -96,8 +96,16 @@ class AiObservabilityStack(Stack):
         scoring_dlq, scoring_queue = self._make_queues(storage_key)
         alert_topic = self._make_sns(alert_email, storage_key)
 
-        roles = self._make_roles(tables, span_stream, scoring_queue, scoring_dlq,
-                                  raw_bucket, alert_topic, storage_key, stream_key)
+        roles = self._make_roles(
+            tables,
+            span_stream,
+            scoring_queue,
+            scoring_dlq,
+            raw_bucket,
+            alert_topic,
+            storage_key,
+            stream_key,
+        )
 
         fns = self._make_lambdas(roles, tables, span_stream, scoring_queue, alert_topic)
         self._wire_event_sources(fns, span_stream, scoring_queue, tables["scores"])
@@ -108,7 +116,8 @@ class AiObservabilityStack(Stack):
         self._make_alarms(alert_topic, scoring_dlq)
 
         logs.LogGroup(
-            self, "TraceLogGroup",
+            self,
+            "TraceLogGroup",
             log_group_name="/ai-obs/traces",
             retention=logs.RetentionDays.THREE_MONTHS,
             removal_policy=RemovalPolicy.DESTROY,
@@ -120,7 +129,8 @@ class AiObservabilityStack(Stack):
         cdk.CfnOutput(self, "ScoringDLQUrl", value=scoring_dlq.queue_url)
         cdk.CfnOutput(self, "StorageKeyArn", value=storage_key.key_arn)
         cdk.CfnOutput(
-            self, "DashboardUrl",
+            self,
+            "DashboardUrl",
             value=(
                 f"https://{self.region}.console.aws.amazon.com"
                 "/cloudwatch/home#dashboards:name=AI-Pipeline-Observability"
@@ -135,8 +145,7 @@ class AiObservabilityStack(Stack):
         value = self.node.try_get_context(key)
         if not value:
             raise ValueError(
-                f"CDK context key '{key}' is required. "
-                f"Pass -c {key}=<value> to cdk deploy."
+                f"CDK context key '{key}' is required. " f"Pass -c {key}=<value> to cdk deploy."
             )
         return str(value)
 
@@ -157,7 +166,8 @@ class AiObservabilityStack(Stack):
     def _make_kms_key(self, construct_id: str, purpose: str) -> kms.Key:
         """Create a CMK with automatic rotation for the given purpose."""
         return kms.Key(
-            self, construct_id,
+            self,
+            construct_id,
             description=f"AI Obs pipeline: {purpose} encryption",
             enable_key_rotation=True,
             removal_policy=RemovalPolicy.RETAIN,
@@ -166,7 +176,8 @@ class AiObservabilityStack(Stack):
     def _make_bucket(self, key: kms.Key) -> s3.Bucket:
         """Create the raw trace archive bucket with encryption and access controls."""
         return s3.Bucket(
-            self, "RawTraceBucket",
+            self,
+            "RawTraceBucket",
             bucket_name=f"ai-obs-raw-traces-{self.account}-{self.region}",
             versioned=True,
             encryption=s3.BucketEncryption.KMS,
@@ -193,7 +204,8 @@ class AiObservabilityStack(Stack):
         enc = dynamodb.TableEncryption.CUSTOMER_MANAGED
 
         trace = dynamodb.Table(
-            self, "TraceTable",
+            self,
+            "TraceTable",
             table_name="ai-obs-traces",
             partition_key=dynamodb.Attribute(name="trace_id", type=dynamodb.AttributeType.STRING),
             sort_key=dynamodb.Attribute(name="span_id", type=dynamodb.AttributeType.STRING),
@@ -207,16 +219,13 @@ class AiObservabilityStack(Stack):
         )
         trace.add_global_secondary_index(
             index_name="session-index",
-            partition_key=dynamodb.Attribute(
-                name="session_id", type=dynamodb.AttributeType.STRING
-            ),
-            sort_key=dynamodb.Attribute(
-                name="timestamp", type=dynamodb.AttributeType.STRING
-            ),
+            partition_key=dynamodb.Attribute(name="session_id", type=dynamodb.AttributeType.STRING),
+            sort_key=dynamodb.Attribute(name="timestamp", type=dynamodb.AttributeType.STRING),
         )
 
         scores = dynamodb.Table(
-            self, "ScoresTable",
+            self,
+            "ScoresTable",
             table_name="ai-obs-scores",
             partition_key=dynamodb.Attribute(name="trace_id", type=dynamodb.AttributeType.STRING),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -228,7 +237,8 @@ class AiObservabilityStack(Stack):
         )
 
         flags = dynamodb.Table(
-            self, "FlagsTable",
+            self,
+            "FlagsTable",
             table_name="ai-obs-flags",
             partition_key=dynamodb.Attribute(name="flag_id", type=dynamodb.AttributeType.STRING),
             sort_key=dynamodb.Attribute(name="trace_id", type=dynamodb.AttributeType.STRING),
@@ -239,7 +249,8 @@ class AiObservabilityStack(Stack):
         )
 
         prompts = dynamodb.Table(
-            self, "PromptRegistry",
+            self,
+            "PromptRegistry",
             table_name="ai-obs-prompts",
             partition_key=dynamodb.Attribute(name="prompt_id", type=dynamodb.AttributeType.STRING),
             sort_key=dynamodb.Attribute(name="version", type=dynamodb.AttributeType.STRING),
@@ -254,7 +265,8 @@ class AiObservabilityStack(Stack):
     def _make_kinesis(self, key: kms.Key) -> kinesis.Stream:
         """Create the span stream with 7-day retention and KMS encryption."""
         return kinesis.Stream(
-            self, "SpanStream",
+            self,
+            "SpanStream",
             stream_name="ai-obs-spans",
             shard_count=2,
             retention_period=Duration.hours(168),
@@ -271,7 +283,8 @@ class AiObservabilityStack(Stack):
     ) -> None:
         """Create the Kinesis Firehose delivery stream to S3."""
         role = iam.Role(
-            self, "FirehoseRole",
+            self,
+            "FirehoseRole",
             assumed_by=iam.ServicePrincipal("firehose.amazonaws.com"),
         )
         bucket.grant_write(role)
@@ -280,7 +293,8 @@ class AiObservabilityStack(Stack):
         stream_key.grant_decrypt(role)
 
         firehose.CfnDeliveryStream(
-            self, "SpanFirehose",
+            self,
+            "SpanFirehose",
             delivery_stream_name="ai-obs-span-firehose",
             kinesis_stream_source_configuration=firehose.CfnDeliveryStream.KinesisStreamSourceConfigurationProperty(
                 kinesis_stream_arn=stream.stream_arn,
@@ -306,14 +320,16 @@ class AiObservabilityStack(Stack):
     def _make_queues(self, key: kms.Key) -> tuple[sqs.Queue, sqs.Queue]:
         """Create the scoring queue and its dead-letter queue, both encrypted."""
         dlq = sqs.Queue(
-            self, "ScoringDLQ",
+            self,
+            "ScoringDLQ",
             queue_name="ai-obs-scoring-dlq",
             encryption=sqs.QueueEncryption.KMS,
             encryption_master_key=key,
             retention_period=Duration.days(14),
         )
         queue = sqs.Queue(
-            self, "ScoringQueue",
+            self,
+            "ScoringQueue",
             queue_name="ai-obs-scoring-queue",
             visibility_timeout=Duration.seconds(120),
             encryption=sqs.QueueEncryption.KMS,
@@ -325,7 +341,8 @@ class AiObservabilityStack(Stack):
     def _make_sns(self, alert_email: str, key: kms.Key) -> sns.Topic:
         """Create the SNS alert topic with email subscription."""
         topic = sns.Topic(
-            self, "AlertTopic",
+            self,
+            "AlertTopic",
             topic_name="ai-obs-alerts",
             display_name="AI Observability Alerts",
             master_key=key,
@@ -353,14 +370,17 @@ class AiObservabilityStack(Stack):
         stream_key: kms.Key,
     ) -> dict[str, iam.Role]:
         """Create six least-privilege IAM roles, one per Lambda function."""
-        base = [iam.ManagedPolicy.from_aws_managed_policy_name(
-            "service-role/AWSLambdaBasicExecutionRole"
-        )]
+        base = [
+            iam.ManagedPolicy.from_aws_managed_policy_name(
+                "service-role/AWSLambdaBasicExecutionRole"
+            )
+        ]
         cw = self._cw_put_policy()
 
         def role(id_: str) -> iam.Role:
             return iam.Role(
-                self, id_,
+                self,
+                id_,
                 assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
                 managed_policies=base,
             )
@@ -441,7 +461,8 @@ class AiObservabilityStack(Stack):
             memory: int = 256,
         ) -> lambda_.Function:
             return lambda_.Function(
-                self, id_,
+                self,
+                id_,
                 function_name=name,
                 runtime=_LAMBDA_RUNTIME,
                 handler=handler,
@@ -454,41 +475,70 @@ class AiObservabilityStack(Stack):
             )
 
         ingest = fn(
-            "IngestFn", "ai-obs-ingest", "ingest.handler",
+            "IngestFn",
+            "ai-obs-ingest",
+            "ingest.handler",
             "cdk_stack/lambda/ingest",
-            {**base_env, "SPAN_STREAM": stream.stream_name,
-             "PROMPT_REGISTRY": tables["prompts"].table_name},
+            {
+                **base_env,
+                "SPAN_STREAM": stream.stream_name,
+                "PROMPT_REGISTRY": tables["prompts"].table_name,
+            },
             roles["ingest"],
         )
         processor = fn(
-            "SpanProcessorFn", "ai-obs-span-processor", "processor.handler",
+            "SpanProcessorFn",
+            "ai-obs-span-processor",
+            "processor.handler",
             "cdk_stack/lambda/processor",
             {**base_env, "SCORING_QUEUE_URL": queue.queue_url},
-            roles["processor"], timeout=60, memory=512,
+            roles["processor"],
+            timeout=60,
+            memory=512,
         )
         scorer = fn(
-            "ScorerFn", "ai-obs-scorer", "scorer.handler",
+            "ScorerFn",
+            "ai-obs-scorer",
+            "scorer.handler",
             "cdk_stack/lambda/scorer",
-            base_env, roles["scorer"], timeout=120, memory=512,
+            base_env,
+            roles["scorer"],
+            timeout=120,
+            memory=512,
         )
         flagging = fn(
-            "FlaggingFn", "ai-obs-flagging", "flagging.handler",
+            "FlaggingFn",
+            "ai-obs-flagging",
+            "flagging.handler",
             "cdk_stack/lambda/flagging",
-            base_env, roles["flagging"], timeout=60,
+            base_env,
+            roles["flagging"],
+            timeout=60,
         )
         feedback = fn(
-            "FeedbackFn", "ai-obs-feedback", "feedback.handler",
+            "FeedbackFn",
+            "ai-obs-feedback",
+            "feedback.handler",
             "cdk_stack/lambda/feedback",
-            base_env, roles["feedback"], timeout=30, memory=128,
+            base_env,
+            roles["feedback"],
+            timeout=30,
+            memory=128,
         )
         metrics_fn = fn(
-            "MetricsFn", "ai-obs-metrics", "metrics.handler",
+            "MetricsFn",
+            "ai-obs-metrics",
+            "metrics.handler",
             "cdk_stack/lambda/metrics",
-            base_env, roles["metrics"], timeout=300, memory=512,
+            base_env,
+            roles["metrics"],
+            timeout=300,
+            memory=512,
         )
 
         rule = events.Rule(
-            self, "MetricsSchedule",
+            self,
+            "MetricsSchedule",
             rule_name="ai-obs-metrics-schedule",
             schedule=events.Schedule.rate(Duration.minutes(5)),
         )
@@ -520,9 +570,7 @@ class AiObservabilityStack(Stack):
                 retry_attempts=3,
             )
         )
-        fns["scorer"].add_event_source(
-            lambda_events.SqsEventSource(queue, batch_size=5)
-        )
+        fns["scorer"].add_event_source(lambda_events.SqsEventSource(queue, batch_size=5))
         fns["flagging"].add_event_source(
             lambda_events.DynamoEventSource(
                 scores_table,
@@ -540,7 +588,8 @@ class AiObservabilityStack(Stack):
     ) -> apigw.RestApi:
         """Create API Gateway with access logging, throttling, and scoped CORS."""
         api = apigw.RestApi(
-            self, "ObsApi",
+            self,
+            "ObsApi",
             rest_api_name="ai-observability-api",
             default_cors_preflight_options=apigw.CorsOptions(
                 allow_origins=cors_origins,
@@ -557,24 +606,29 @@ class AiObservabilityStack(Stack):
                 tracing_enabled=True,
                 access_log_destination=apigw.LogGroupLogDestination(
                     logs.LogGroup(
-                        self, "ApiAccessLog",
+                        self,
+                        "ApiAccessLog",
                         log_group_name="/ai-obs/api-access",
                         retention=logs.RetentionDays.THREE_MONTHS,
                         removal_policy=RemovalPolicy.DESTROY,
                     )
                 ),
                 access_log_format=apigw.AccessLogFormat.json_with_standard_fields(
-                    caller=True, http_method=True, ip=True, protocol=True,
-                    request_time=True, resource_path=True, response_length=True,
-                    status=True, user=True,
+                    caller=True,
+                    http_method=True,
+                    ip=True,
+                    protocol=True,
+                    request_time=True,
+                    resource_path=True,
+                    response_length=True,
+                    status=True,
+                    user=True,
                 ),
             ),
         )
 
         traces_r = api.root.add_resource("traces")
-        traces_r.add_method(
-            "POST", apigw.LambdaIntegration(fns["ingest"]), api_key_required=True
-        )
+        traces_r.add_method("POST", apigw.LambdaIntegration(fns["ingest"]), api_key_required=True)
 
         feedback_r = api.root.add_resource("feedback")
         feedback_r.add_method(
@@ -595,7 +649,8 @@ class AiObservabilityStack(Stack):
     def _make_waf(self, api: apigw.RestApi) -> None:
         """Attach WAFv2 WebACL with OWASP managed rules and IP rate limiting."""
         waf = wafv2.CfnWebACL(
-            self, "ApiWaf",
+            self,
+            "ApiWaf",
             scope="REGIONAL",
             default_action=wafv2.CfnWebACL.DefaultActionProperty(allow={}),
             visibility_config=wafv2.CfnWebACL.VisibilityConfigProperty(
@@ -610,10 +665,10 @@ class AiObservabilityStack(Stack):
             ],
         )
         wafv2.CfnWebACLAssociation(
-            self, "ApiWafAssociation",
+            self,
+            "ApiWafAssociation",
             resource_arn=(
-                f"arn:aws:apigateway:{self.region}::"
-                f"/restapis/{api.rest_api_id}/stages/v1"
+                f"arn:aws:apigateway:{self.region}::" f"/restapis/{api.rest_api_id}/stages/v1"
             ),
             web_acl_arn=waf.attr_arn,
         )
@@ -637,9 +692,7 @@ class AiObservabilityStack(Stack):
             ),
         )
 
-    def _waf_rate_rule(
-        self, name: str, priority: int, limit: int
-    ) -> wafv2.CfnWebACL.RuleProperty:
+    def _waf_rate_rule(self, name: str, priority: int, limit: int) -> wafv2.CfnWebACL.RuleProperty:
         return wafv2.CfnWebACL.RuleProperty(
             name=name,
             priority=priority,
@@ -665,42 +718,88 @@ class AiObservabilityStack(Stack):
         dashboard.add_widgets(
             cloudwatch.GraphWidget(
                 title="Requests/min",
-                left=[cloudwatch.Metric(namespace=ns, metric_name="RequestCount",
-                      statistic="Sum", period=Duration.minutes(1))], width=8,
+                left=[
+                    cloudwatch.Metric(
+                        namespace=ns,
+                        metric_name="RequestCount",
+                        statistic="Sum",
+                        period=Duration.minutes(1),
+                    )
+                ],
+                width=8,
             ),
             cloudwatch.GraphWidget(
                 title="Avg Latency (ms)",
-                left=[cloudwatch.Metric(namespace=ns, metric_name="PipelineLatencyMs",
-                      statistic="Average", period=Duration.minutes(1))], width=8,
+                left=[
+                    cloudwatch.Metric(
+                        namespace=ns,
+                        metric_name="PipelineLatencyMs",
+                        statistic="Average",
+                        period=Duration.minutes(1),
+                    )
+                ],
+                width=8,
             ),
             cloudwatch.GraphWidget(
                 title="Hallucination Score",
-                left=[cloudwatch.Metric(namespace=ns, metric_name="HallucinationScore",
-                      statistic="Average", period=Duration.minutes(5))], width=8,
+                left=[
+                    cloudwatch.Metric(
+                        namespace=ns,
+                        metric_name="HallucinationScore",
+                        statistic="Average",
+                        period=Duration.minutes(5),
+                    )
+                ],
+                width=8,
             ),
             cloudwatch.GraphWidget(
                 title="Groundedness Score",
-                left=[cloudwatch.Metric(namespace=ns, metric_name="GroundednessScore",
-                      statistic="Average", period=Duration.minutes(5))], width=8,
+                left=[
+                    cloudwatch.Metric(
+                        namespace=ns,
+                        metric_name="GroundednessScore",
+                        statistic="Average",
+                        period=Duration.minutes(5),
+                    )
+                ],
+                width=8,
             ),
             cloudwatch.GraphWidget(
                 title="Model Cost (USD)",
-                left=[cloudwatch.Metric(namespace=ns, metric_name="ModelCostUSD",
-                      statistic="Sum", period=Duration.hours(1))], width=8,
+                left=[
+                    cloudwatch.Metric(
+                        namespace=ns,
+                        metric_name="ModelCostUSD",
+                        statistic="Sum",
+                        period=Duration.hours(1),
+                    )
+                ],
+                width=8,
             ),
             cloudwatch.GraphWidget(
                 title="Flagged Answers",
-                left=[cloudwatch.Metric(namespace=ns, metric_name="FlaggedAnswers",
-                      statistic="Sum", period=Duration.minutes(5))], width=8,
+                left=[
+                    cloudwatch.Metric(
+                        namespace=ns,
+                        metric_name="FlaggedAnswers",
+                        statistic="Sum",
+                        period=Duration.minutes(5),
+                    )
+                ],
+                width=8,
             ),
             cloudwatch.GraphWidget(
                 title="Scoring DLQ Depth",
-                left=[cloudwatch.Metric(
-                    namespace="AWS/SQS",
-                    metric_name="ApproximateNumberOfMessagesVisible",
-                    dimensions_map={"QueueName": dlq.queue_name},
-                    statistic="Maximum", period=Duration.minutes(5),
-                )], width=8,
+                left=[
+                    cloudwatch.Metric(
+                        namespace="AWS/SQS",
+                        metric_name="ApproximateNumberOfMessagesVisible",
+                        dimensions_map={"QueueName": dlq.queue_name},
+                        statistic="Maximum",
+                        period=Duration.minutes(5),
+                    )
+                ],
+                width=8,
             ),
         )
 
@@ -709,25 +808,49 @@ class AiObservabilityStack(Stack):
         ns = _CW_NAMESPACE
 
         alarm_specs = [
-            ("HallucinationAlarm", "ai-obs-high-hallucination", ns,
-             "HallucinationScore", 0.5, 2, "Average",
-             "Average hallucination > 0.5 over two 5-min windows"),
-            ("ErrorRateAlarm", "ai-obs-high-error-rate", ns,
-             "ErrorRate", 0.05, 3, "Average",
-             "Error rate > 5% over three 5-min windows"),
-            ("FlagAlarm", "ai-obs-flag-spike", ns,
-             "FlaggedAnswers", 10, 1, "Sum",
-             "More than 10 flagged answers in a single 5-min window"),
+            (
+                "HallucinationAlarm",
+                "ai-obs-high-hallucination",
+                ns,
+                "HallucinationScore",
+                0.5,
+                2,
+                "Average",
+                "Average hallucination > 0.5 over two 5-min windows",
+            ),
+            (
+                "ErrorRateAlarm",
+                "ai-obs-high-error-rate",
+                ns,
+                "ErrorRate",
+                0.05,
+                3,
+                "Average",
+                "Error rate > 5% over three 5-min windows",
+            ),
+            (
+                "FlagAlarm",
+                "ai-obs-flag-spike",
+                ns,
+                "FlaggedAnswers",
+                10,
+                1,
+                "Sum",
+                "More than 10 flagged answers in a single 5-min window",
+            ),
         ]
 
         for alarm_id, name, namespace, metric_name, threshold, periods, stat, desc in alarm_specs:
             alarm = cloudwatch.Alarm(
-                self, alarm_id,
+                self,
+                alarm_id,
                 alarm_name=name,
                 alarm_description=desc,
                 metric=cloudwatch.Metric(
-                    namespace=namespace, metric_name=metric_name,
-                    statistic=stat, period=Duration.minutes(5),
+                    namespace=namespace,
+                    metric_name=metric_name,
+                    statistic=stat,
+                    period=Duration.minutes(5),
                 ),
                 threshold=threshold,
                 evaluation_periods=periods,
@@ -737,14 +860,16 @@ class AiObservabilityStack(Stack):
             alarm.add_alarm_action(cw_actions.SnsAction(topic))
 
         dlq_alarm = cloudwatch.Alarm(
-            self, "DLQAlarm",
+            self,
+            "DLQAlarm",
             alarm_name="ai-obs-dlq-messages",
             alarm_description="Messages in scoring DLQ: investigate poison spans",
             metric=cloudwatch.Metric(
                 namespace="AWS/SQS",
                 metric_name="ApproximateNumberOfMessagesVisible",
                 dimensions_map={"QueueName": dlq.queue_name},
-                statistic="Maximum", period=Duration.minutes(5),
+                statistic="Maximum",
+                period=Duration.minutes(5),
             ),
             threshold=1,
             evaluation_periods=1,

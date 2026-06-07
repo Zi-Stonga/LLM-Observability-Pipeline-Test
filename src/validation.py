@@ -15,9 +15,7 @@ from src.exceptions import ValidationError
 _SAFE_ID_RE: re.Pattern[str] = re.compile(r"^[a-zA-Z0-9_\-]{1,128}$")
 _SAFE_MODEL_RE: re.Pattern[str] = re.compile(r"^[a-zA-Z0-9_\-\.]{1,64}$")
 _SAFE_VER_RE: re.Pattern[str] = re.compile(r"^[a-zA-Z0-9_\-\.]{1,32}$")
-_VALID_ENVIRONMENTS: frozenset[str] = frozenset(
-    {"production", "staging", "development", "test"}
-)
+_VALID_ENVIRONMENTS: frozenset[str] = frozenset({"production", "staging", "development", "test"})
 _VALID_RATINGS: frozenset[str] = frozenset({"thumbs_up", "thumbs_down"})
 _TEMP_MIN: float = 0.0
 _TEMP_MAX: float = 2.0
@@ -91,9 +89,7 @@ def validate_prompt_version(value: str) -> str:
         ValidationError: If the version contains invalid characters.
     """
     if not isinstance(value, str) or not _SAFE_VER_RE.match(value):
-        raise ValidationError(
-            "prompt_version", "must be 1-32 alphanumeric/dash/dot characters"
-        )
+        raise ValidationError("prompt_version", "must be 1-32 alphanumeric/dash/dot characters")
     return value
 
 

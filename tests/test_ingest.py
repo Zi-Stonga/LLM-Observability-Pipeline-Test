@@ -8,8 +8,10 @@ import sys
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cdk_stack", "lambda", "ingest"))
-
+sys.path.insert(
+    0,
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cdk_stack", "lambda", "ingest"),
+)
 
 
 def _make_event(body: dict[str, Any]) -> dict[str, Any]:
@@ -28,13 +30,16 @@ class TestIngestHandler:
     ) -> None:
         # Arrange
         from ingest import handler
+
         mock_table.put_item.return_value = {}
         mock_kinesis.put_record.return_value = {}
-        event = _make_event({
-            "session_id": "sess-001",
-            "model": "claude-sonnet",
-            "question": "What is the refund policy?",
-        })
+        event = _make_event(
+            {
+                "session_id": "sess-001",
+                "model": "claude-sonnet",
+                "question": "What is the refund policy?",
+            }
+        )
         # Act
         response = handler(event, None)
         # Assert
@@ -52,6 +57,7 @@ class TestIngestHandler:
     ) -> None:
         # Arrange
         from ingest import handler
+
         mock_table.put_item.return_value = {}
         mock_kinesis.put_record.return_value = {}
         event = _make_event({"trace_id": "my-trace-123", "question": "hello"})
@@ -70,6 +76,7 @@ class TestIngestHandler:
     ) -> None:
         # Arrange
         from ingest import handler
+
         event = _make_event({"question": "hello", "temperature": 5.0})
         # Act
         response = handler(event, None)
@@ -86,6 +93,7 @@ class TestIngestHandler:
     ) -> None:
         # Arrange
         from ingest import handler
+
         event = _make_event({"question": "hello", "environment": "prod"})
         # Act
         response = handler(event, None)
@@ -101,6 +109,7 @@ class TestIngestHandler:
     ) -> None:
         # Arrange
         from ingest import handler
+
         event = {"body": "not-json"}
         # Act
         response = handler(event, None)
@@ -116,6 +125,7 @@ class TestIngestHandler:
     ) -> None:
         # Arrange: mock_table replaces DynamoDB; raising simulates service failure
         from ingest import handler
+
         mock_table.put_item.side_effect = Exception("DynamoDB error")
         event = _make_event({"question": "hello"})
         # Act

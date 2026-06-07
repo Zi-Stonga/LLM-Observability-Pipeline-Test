@@ -24,9 +24,7 @@ class Span:
     trace_id: str
     span_id: str
     span_type: str
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(UTC).isoformat()
-    )
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     session_id: str = "unknown"
     model: str = "unknown"
     payload: str = ""
@@ -52,9 +50,7 @@ class QualityScore:
     model: str
     chunk_count: int
     answer_len: int
-    scored_at: str = field(
-        default_factory=lambda: datetime.now(UTC).isoformat()
-    )
+    scored_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     def __repr__(self) -> str:
         return (
@@ -73,9 +69,7 @@ class Flag:
     rule: str
     detail: str
     severity: str
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(UTC).isoformat()
-    )
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     status: str = "open"
 
     def __repr__(self) -> str:
@@ -99,10 +93,7 @@ class IngestRequest:
     trace_id: str = ""
 
     def __repr__(self) -> str:
-        return (
-            f"IngestRequest(session_id={self.session_id!r}, "
-            f"model={self.model!r})"
-        )
+        return f"IngestRequest(session_id={self.session_id!r}, " f"model={self.model!r})"
 
 
 @dataclass

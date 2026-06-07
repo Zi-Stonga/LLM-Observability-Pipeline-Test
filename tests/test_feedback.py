@@ -8,8 +8,12 @@ import sys
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cdk_stack", "lambda", "feedback"))
-
+sys.path.insert(
+    0,
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "cdk_stack", "lambda", "feedback"
+    ),
+)
 
 
 def _event(body: dict[str, Any]) -> dict[str, Any]:
@@ -30,6 +34,7 @@ class TestFeedbackHandler:
     ) -> None:
         # Arrange
         from feedback import handler
+
         mock_scores.update_item.return_value = {}
         # Act
         response = handler(_event({"trace_id": "trace-001", "rating": "thumbs_up"}), None)
@@ -48,6 +53,7 @@ class TestFeedbackHandler:
     ) -> None:
         # Arrange
         from feedback import handler
+
         mock_scores.update_item.return_value = {}
         # Act
         handler(_event({"trace_id": "trace-002", "rating": "thumbs_down"}), None)
@@ -68,6 +74,7 @@ class TestFeedbackHandler:
     ) -> None:
         # Arrange
         from feedback import handler
+
         # Act
         response = handler(_event({"trace_id": "trace-003", "rating": "meh"}), None)
         # Assert
@@ -84,9 +91,8 @@ class TestFeedbackHandler:
     ) -> None:
         # Arrange
         from feedback import handler
+
         # Act
-        response = handler(
-            _event({"trace_id": "bad id with spaces", "rating": "thumbs_up"}), None
-        )
+        response = handler(_event({"trace_id": "bad id with spaces", "rating": "thumbs_up"}), None)
         # Assert
         assert response["statusCode"] == 400

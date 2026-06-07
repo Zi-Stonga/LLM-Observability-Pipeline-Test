@@ -99,15 +99,17 @@ def _write_flag(trace_id: str, rule: str, detail: str, severity: str) -> None:
         detail: Human-readable description of the violation.
         severity: One of CRITICAL, HIGH, MEDIUM, LOW.
     """
-    flags_tbl.put_item(Item={
-        "flag_id": str(uuid.uuid4()),
-        "trace_id": trace_id,
-        "timestamp": datetime.now(UTC).isoformat(),
-        "rule": rule,
-        "detail": detail,
-        "severity": severity,
-        "status": "open",
-    })
+    flags_tbl.put_item(
+        Item={
+            "flag_id": str(uuid.uuid4()),
+            "trace_id": trace_id,
+            "timestamp": datetime.now(UTC).isoformat(),
+            "rule": rule,
+            "detail": detail,
+            "severity": severity,
+            "status": "open",
+        }
+    )
     cw.put_metric_data(
         Namespace=NS,
         MetricData=[{"MetricName": "FlaggedAnswers", "Value": 1, "Unit": "Count"}],
@@ -139,20 +141,24 @@ def handler(event: dict[str, Any], context: Any) -> None:
 
             spans = _fetch_spans(trace_id)
             answer = spans.get("final_response", {}).get("payload", "") or ""
-            ret = (spans.get("retrieved_chunks") or spans.get("retriever") or {})
+            ret = spans.get("retrieved_chunks") or spans.get("retriever") or {}
             chunks = ret.get("enriched_chunks", [])
 
             if not chunks and any(kw in answer.lower() for kw in POLICY_KEYWORDS):
                 _write_flag(
-                    trace_id, "NO_SOURCE_POLICY_CLAIM",
-                    "Answer references policy but no documents retrieved.", "CRITICAL",
+                    trace_id,
+                    "NO_SOURCE_POLICY_CLAIM",
+                    "Answer references policy but no documents retrieved.",
+                    "CRITICAL",
                 )
                 pending["NO_SOURCE_POLICY_CLAIM"].append({"trace_id": trace_id})
 
             if groundedness < 0.2 and len(answer) > 100:
                 _write_flag(
-                    trace_id, "LOW_GROUNDEDNESS",
-                    f"Groundedness {groundedness:.2f}: possible contradiction.", "HIGH",
+                    trace_id,
+                    "LOW_GROUNDEDNESS",
+                    f"Groundedness {groundedness:.2f}: possible contradiction.",
+                    "HIGH",
                 )
                 pending["LOW_GROUNDEDNESS"].append(
                     {"trace_id": trace_id, "groundedness": groundedness}
@@ -160,8 +166,10 @@ def handler(event: dict[str, Any], context: Any) -> None:
 
             if hallucination > 0.7:
                 _write_flag(
-                    trace_id, "HIGH_HALLUCINATION",
-                    f"Hallucination {hallucination:.2f}: answer likely fabricated.", "CRITICAL",
+                    trace_id,
+                    "HIGH_HALLUCINATION",
+                    f"Hallucination {hallucination:.2f}: answer likely fabricated.",
+                    "CRITICAL",
                 )
                 pending["HIGH_HALLUCINATION"].append(
                     {"trace_id": trace_id, "hallucination": hallucination}

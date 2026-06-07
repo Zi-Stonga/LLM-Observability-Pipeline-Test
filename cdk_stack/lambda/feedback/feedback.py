@@ -61,23 +61,27 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
         cw.put_metric_data(
             Namespace=NS,
-            MetricData=[{
-                "MetricName": "ThumbsDown" if rating == "thumbs_down" else "ThumbsUp",
-                "Value": 1,
-                "Unit": "Count",
-            }],
+            MetricData=[
+                {
+                    "MetricName": "ThumbsDown" if rating == "thumbs_down" else "ThumbsUp",
+                    "Value": 1,
+                    "Unit": "Count",
+                }
+            ],
         )
 
         if rating == "thumbs_down":
-            flags_tbl.put_item(Item={
-                "flag_id": str(uuid.uuid4()),
-                "trace_id": trace_id,
-                "timestamp": now,
-                "rule": "USER_THUMBS_DOWN",
-                "detail": "User downvoted this response.",
-                "severity": "MEDIUM",
-                "status": "open",
-            })
+            flags_tbl.put_item(
+                Item={
+                    "flag_id": str(uuid.uuid4()),
+                    "trace_id": trace_id,
+                    "timestamp": now,
+                    "rule": "USER_THUMBS_DOWN",
+                    "detail": "User downvoted this response.",
+                    "severity": "MEDIUM",
+                    "status": "open",
+                }
+            )
             logger.info("Thumbs-down flag created for trace %s", trace_id)
         else:
             logger.info("Thumbs-up recorded for trace %s", trace_id)
