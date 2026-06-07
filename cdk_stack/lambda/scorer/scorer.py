@@ -19,7 +19,7 @@ import json
 import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import boto3
@@ -152,7 +152,7 @@ def handler(event: dict[str, Any], context: Any) -> None:
 
             scores_tbl.put_item(Item={
                 "trace_id": trace_id,
-                "scored_at": datetime.now(timezone.utc).isoformat(),
+                "scored_at": datetime.now(UTC).isoformat(),
                 "groundedness": str(groundedness),
                 "hallucination": str(hallucination),
                 "cost_usd": str(round(total_cost, 6)),

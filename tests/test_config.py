@@ -11,6 +11,7 @@ class TestLambdaConfig:
     def test_loads_required_vars(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # Arrange: all required vars present via conftest autouse fixture
         import importlib
+
         import src.config as config_module
         importlib.reload(config_module)
         # Act
@@ -25,6 +26,7 @@ class TestLambdaConfig:
         monkeypatch.delenv("SPAN_STREAM", raising=False)
         monkeypatch.delenv("SCORING_QUEUE_URL", raising=False)
         import importlib
+
         import src.config as config_module
         importlib.reload(config_module)
         from src.config import config

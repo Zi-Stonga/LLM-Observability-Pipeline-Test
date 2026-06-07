@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import json
-import sys
 import os
+import sys
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "cdk_stack", "lambda", "feedback"))
 
-import pytest
 
 
 def _event(body: dict[str, Any]) -> dict[str, Any]:

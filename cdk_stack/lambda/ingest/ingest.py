@@ -10,11 +10,6 @@ from __future__ import annotations
 
 import json
 import logging
-import time
-from datetime import datetime, timezone
-from typing import Any
-
-import boto3
 
 # Config module handles all os.getenv access and validates at cold start.
 # Inline import here because Lambda packaging does not include src/.
@@ -22,7 +17,12 @@ import boto3
 # to keep deployment packages independent.
 import os
 import re
+import time
 import uuid
+from datetime import UTC, datetime
+from typing import Any
+
+import boto3
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -77,7 +77,7 @@ def _validate_temperature(value: Any) -> float:
     try:
         temp = float(value)
     except (TypeError, ValueError):
-        raise ValueError(f"temperature must be a number, got {value!r}")
+        raise ValueError(f"temperature must be a number, got {value!r}") from None
     if not (_TEMP_MIN <= temp <= _TEMP_MAX):
         raise ValueError(f"temperature must be in [{_TEMP_MIN}, {_TEMP_MAX}], got {temp}")
     return temp
@@ -147,7 +147,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         body = json.loads(event.get("body") or "{}")
         fields = _parse_request(body)
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         ttl = int(time.time()) + (90 * 86400)
 
         item: dict[str, Any] = {

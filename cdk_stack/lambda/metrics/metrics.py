@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import boto3
@@ -35,13 +35,13 @@ def _scan_recent_llm_spans(cutoff: str) -> list[dict[str, Any]]:
         All matching span items across all DynamoDB pages.
     """
     items: list[dict[str, Any]] = []
-    kwargs: dict[str, Any] = dict(
-        FilterExpression=(
+    kwargs: dict[str, Any] = {
+        "FilterExpression": (
             Attr("span_type").eq("llm_call") & Attr("timestamp").gte(cutoff)
         ),
-        ProjectionExpression="trace_id,latency_ms,#e,retries,total_tokens,cost_usd",
-        ExpressionAttributeNames={"#e": "error"},
-    )
+        "ProjectionExpression": "trace_id,latency_ms,#e,retries,total_tokens,cost_usd",
+        "ExpressionAttributeNames": {"#e": "error"},
+    }
     while True:
         resp = trace_tbl.scan(**kwargs)
         items.extend(resp.get("Items", []))
@@ -60,7 +60,7 @@ def handler(event: dict[str, Any], context: Any) -> None:
         context: Lambda context object.
     """
     try:
-        cutoff = (datetime.now(timezone.utc) - timedelta(minutes=_WINDOW_MINUTES)).isoformat()
+        cutoff = (datetime.now(UTC) - timedelta(minutes=_WINDOW_MINUTES)).isoformat()
         items = _scan_recent_llm_spans(cutoff)
 
         if not items:

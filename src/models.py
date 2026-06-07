@@ -8,7 +8,7 @@ No raw dicts passed between modules.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -25,7 +25,7 @@ class Span:
     span_id: str
     span_type: str
     timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: datetime.now(UTC).isoformat()
     )
     session_id: str = "unknown"
     model: str = "unknown"
@@ -53,7 +53,7 @@ class QualityScore:
     chunk_count: int
     answer_len: int
     scored_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: datetime.now(UTC).isoformat()
     )
 
     def __repr__(self) -> str:
@@ -74,7 +74,7 @@ class Flag:
     detail: str
     severity: str
     timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: datetime.now(UTC).isoformat()
     )
     status: str = "open"
 

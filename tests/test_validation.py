@@ -4,16 +4,14 @@ from __future__ import annotations
 
 import pytest
 
+from src.exceptions import ValidationError
 from src.validation import (
     validate_environment,
     validate_identifier,
-    validate_model,
     validate_or_generate_trace_id,
-    validate_prompt_version,
     validate_rating,
     validate_temperature,
 )
-from src.exceptions import ValidationError
 
 
 class TestValidateIdentifier:

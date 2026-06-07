@@ -13,7 +13,7 @@ import logging
 import os
 import uuid
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import boto3
@@ -102,7 +102,7 @@ def _write_flag(trace_id: str, rule: str, detail: str, severity: str) -> None:
     flags_tbl.put_item(Item={
         "flag_id": str(uuid.uuid4()),
         "trace_id": trace_id,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "rule": rule,
         "detail": detail,
         "severity": severity,

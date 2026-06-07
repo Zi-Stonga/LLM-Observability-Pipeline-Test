@@ -130,7 +130,7 @@ def validate_temperature(value: float | int | str) -> float:
     try:
         temp = float(value)
     except (TypeError, ValueError):
-        raise ValidationError("temperature", f"must be a number, got {value!r}")
+        raise ValidationError("temperature", f"must be a number, got {value!r}") from None
     if not (_TEMP_MIN <= temp <= _TEMP_MAX):
         raise ValidationError(
             "temperature", f"must be between {_TEMP_MIN} and {_TEMP_MAX}, got {temp}"

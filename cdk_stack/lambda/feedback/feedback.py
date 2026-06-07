@@ -12,7 +12,7 @@ import logging
 import os
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import boto3
@@ -51,7 +51,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         if rating not in _VALID_RATINGS:
             return _err(400, "rating must be 'thumbs_up' or 'thumbs_down'")
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         scores_tbl.update_item(
             Key={"trace_id": trace_id},
